@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest) {
     if (action === "reschedule") {
       const date = String(body.date ?? "");
       const startTime = String(body.startTime ?? "");
-      const slot = await assertSlotAvailable(appointment.serviceId, date, startTime);
+      const slot = await assertSlotAvailable(appointment.serviceId, date, startTime, appointment.id);
 
       const updated = await rescheduleAppointment(
         appointment.id,

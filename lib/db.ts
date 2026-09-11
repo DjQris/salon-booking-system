@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
-import initSqlJs, { Database } from "sql.js";
+import initSqlJs, { Database, SqlValue } from "sql.js";
 import { hashPassword } from "@/lib/auth-crypto";
 
 export type Service = {
@@ -92,7 +92,7 @@ function bool(value: unknown) {
   return Boolean(Number(value));
 }
 
-function rows<T>(db: Database, sql: string, params: unknown[] = []) {
+function rows<T>(db: Database, sql: string, params: SqlValue[] = []) {
   const stmt = db.prepare(sql);
   const result: T[] = [];
   stmt.bind(params);
@@ -105,7 +105,7 @@ function rows<T>(db: Database, sql: string, params: unknown[] = []) {
   return result;
 }
 
-function one<T>(db: Database, sql: string, params: unknown[] = []) {
+function one<T>(db: Database, sql: string, params: SqlValue[] = []) {
   return rows<T>(db, sql, params)[0] ?? null;
 }
 
@@ -455,7 +455,9 @@ export async function getAppointmentByToken(token: string) {
   return readDb((db) => {
     const row = one<Record<string, unknown>>(db, "SELECT * FROM appointments WHERE manage_token = ?", [token]);
     if (!row) return null;
-    const serviceRow = one<Record<string, unknown>>(db, "SELECT * FROM services WHERE id = ?", [row.service_id]);
+    const serviceRow = one<Record<string, unknown>>(db, "SELECT * FROM services WHERE id = ?", [
+      String(row.service_id)
+    ]);
     return mapAppointment(row, serviceRow ? mapService(serviceRow) : undefined);
   });
 }
@@ -465,7 +467,9 @@ export async function updateAppointmentStatus(idValue: string, status: string) {
     db.run("UPDATE appointments SET status = ?, updated_at = ? WHERE id = ?", [status, now(), idValue]);
     const row = one<Record<string, unknown>>(db, "SELECT * FROM appointments WHERE id = ?", [idValue]);
     if (!row) return null;
-    const serviceRow = one<Record<string, unknown>>(db, "SELECT * FROM services WHERE id = ?", [row.service_id]);
+    const serviceRow = one<Record<string, unknown>>(db, "SELECT * FROM services WHERE id = ?", [
+      String(row.service_id)
+    ]);
     return mapAppointment(row, serviceRow ? mapService(serviceRow) : undefined);
   });
 }
@@ -482,7 +486,9 @@ export async function rescheduleAppointment(idValue: string, date: string, start
     insertNotifications(db, notifications);
     const row = one<Record<string, unknown>>(db, "SELECT * FROM appointments WHERE id = ?", [idValue]);
     if (!row) return null;
-    const serviceRow = one<Record<string, unknown>>(db, "SELECT * FROM services WHERE id = ?", [row.service_id]);
+    const serviceRow = one<Record<string, unknown>>(db, "SELECT * FROM services WHERE id = ?", [
+      String(row.service_id)
+    ]);
     return mapAppointment(row, serviceRow ? mapService(serviceRow) : undefined);
   });
 }
