@@ -21,11 +21,18 @@ export const notificationPurposes = {
   reschedule: "RESCHEDULE"
 } as const;
 
+export type NotificationPurpose = (typeof notificationPurposes)[keyof typeof notificationPurposes];
+export type NotificationChannel = "EMAIL" | "SMS";
+
 export function createManageToken() {
   return randomBytes(24).toString("hex");
 }
 
-export async function getAvailableSlots(serviceId: string, date: string): Promise<Slot[]> {
+export async function getAvailableSlots(
+  serviceId: string,
+  date: string,
+  excludeAppointmentId?: string
+): Promise<Slot[]> {
   const service = await getServiceById(serviceId);
 
   if (!service || !service.active || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -65,8 +72,10 @@ export async function getAvailableSlots(serviceId: string, date: string): Promis
       return overlaps(startTime, endTime, block.startTime, block.endTime);
     });
 
-    const taken = appointments.some((appointment) =>
-      overlaps(startTime, endTime, appointment.startTime, appointment.endTime)
+    const taken = appointments.some(
+      (appointment) =>
+        appointment.id !== excludeAppointmentId &&
+        overlaps(startTime, endTime, appointment.startTime, appointment.endTime)
     );
 
     if (!blocked && !taken) {
@@ -77,8 +86,13 @@ export async function getAvailableSlots(serviceId: string, date: string): Promis
   return slots;
 }
 
-export async function assertSlotAvailable(serviceId: string, date: string, startTime: string) {
-  const slots = await getAvailableSlots(serviceId, date);
+export async function assertSlotAvailable(
+  serviceId: string,
+  date: string,
+  startTime: string,
+  excludeAppointmentId?: string
+) {
+  const slots = await getAvailableSlots(serviceId, date, excludeAppointmentId);
   const slot = slots.find((candidate) => candidate.startTime === startTime);
 
   if (!slot) {
@@ -107,7 +121,7 @@ export function buildNotificationDrafts(input: {
   date: string;
   startTime: string;
   endTime: string;
-  purpose?: string;
+  purpose?: NotificationPurpose;
 }) {
   const purpose = input.purpose ?? notificationPurposes.confirmation;
   const summary = createAppointmentSummary(input);
@@ -123,7 +137,7 @@ export function buildNotificationDrafts(input: {
       channel: "SMS",
       recipient: input.phone
     }
-  ].filter(Boolean) as Array<{ channel: string; recipient: string }>;
+  ].filter(Boolean) as Array<{ channel: NotificationChannel; recipient: string }>;
 
   return [
     ...channels.map((channel) => ({

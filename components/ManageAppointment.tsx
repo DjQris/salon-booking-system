@@ -60,11 +60,11 @@ export function ManageAppointment() {
       return;
     }
 
-    fetch(`/api/slots?serviceId=${appointment.serviceId}&date=${date}`)
+    fetch(`/api/slots?serviceId=${appointment.serviceId}&date=${date}&token=${token}`)
       .then((response) => response.json())
       .then((data) => setSlots(data.slots ?? []))
       .catch(() => setError("Available times could not be loaded."));
-  }, [appointment?.serviceId, appointment?.status, date]);
+  }, [appointment?.serviceId, appointment?.status, date, token]);
 
   async function updateAppointment(action: "cancel" | "reschedule", event?: FormEvent) {
     event?.preventDefault();
