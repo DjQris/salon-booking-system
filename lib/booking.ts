@@ -107,7 +107,7 @@ export function buildNotificationDrafts(input: {
   date: string;
   startTime: string;
   endTime: string;
-  purpose?: NotificationPurpose;
+  purpose?: string;
 }) {
   const purpose = input.purpose ?? notificationPurposes.confirmation;
   const summary = createAppointmentSummary(input);
@@ -123,14 +123,14 @@ export function buildNotificationDrafts(input: {
       channel: "SMS",
       recipient: input.phone
     }
-  ].filter(Boolean) as Array<{ channel: NotificationChannel; recipient: string }>;
+  ].filter(Boolean) as Array<{ channel: string; recipient: string }>;
 
   return [
     ...channels.map((channel) => ({
       appointmentId: input.appointmentId,
       ...channel,
       purpose,
-      subject: purpose === NotificationPurpose.RESCHEDULE ? "Appointment rescheduled" : "Appointment confirmed",
+      subject: purpose === notificationPurposes.reschedule ? "Appointment rescheduled" : "Appointment confirmed",
       body: summary,
       sentAt: new Date()
     })),

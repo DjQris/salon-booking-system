@@ -9,11 +9,12 @@ import {
   MessageSquareText,
   Phone,
   Scissors,
-  ShieldCheck,
-  Sparkles,
+  LogOut,
+  X,
   User
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { signOut } from "next-auth/react";
 
 type Service = {
   id: string;
@@ -45,7 +46,7 @@ type AppointmentResponse = {
 const today = new Date();
 const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-export function BookingExperience() {
+export function BookingExperience({ customer }: { customer: { name: string; email: string } }) {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [date, setDate] = useState(tomorrow);
@@ -58,9 +59,9 @@ export function BookingExperience() {
   const [error, setError] = useState("");
   const [confirmation, setConfirmation] = useState<AppointmentResponse | null>(null);
   const [form, setForm] = useState({
-    customerName: "",
+    customerName: customer.name,
     phone: "",
-    email: "",
+    email: customer.email,
     notes: ""
   });
 
@@ -98,7 +99,7 @@ export function BookingExperience() {
     setSelectedSlot(null);
     setConfirmation(null);
     setError("");
-    setForm({ customerName: "", phone: "", email: "", notes: "" });
+    setForm({ customerName: customer.name, phone: "", email: customer.email, notes: "" });
   }
 
   async function submitBooking(event: FormEvent) {
@@ -145,14 +146,14 @@ export function BookingExperience() {
         </a>
         <nav>
           <a href="/manage">Manage booking</a>
-          <a href="/admin/login">Admin</a>
+          <button className="secondary-button" onClick={() => signOut({ callbackUrl: "/" })}><LogOut size={16} /> Sign out</button>
         </nav>
       </header>
 
-      <section className="hero-shell">
+      <section className="booking-intro">
         <div className="hero-copy">
           <p className="eyebrow">Unisex salon booking</p>
-          <h1>Aura & Edge Salon</h1>
+          <h1>Make time for yourself.</h1>
           <p>
             Book washing, barbing, shaving, plaiting, conditioning, and care appointments
             from live available time slots.
@@ -174,33 +175,12 @@ export function BookingExperience() {
             </a>
           </div>
         </div>
-        <div className="hero-media" aria-label="Salon styling station">
-          <img
-            src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
-            alt="Salon chair and styling mirrors"
-          />
-        </div>
-      </section>
-
-      <section className="trust-strip">
-        <div>
-          <ShieldCheck size={20} />
-          <span>Auto-confirmed bookings</span>
-        </div>
-        <div>
-          <MessageSquareText size={20} />
-          <span>Mock SMS and email summaries</span>
-        </div>
-        <div>
-          <Sparkles size={20} />
-          <span>Separate capacity by service area</span>
-        </div>
       </section>
 
       <section className="service-band">
         <div className="section-heading">
           <p className="eyebrow">Services</p>
-          <h2>Choose a service and see only times that can actually be booked.</h2>
+          <h2>What brings you in?</h2>
         </div>
         <div className="service-grid">
           {services.map((service) => (
@@ -225,7 +205,7 @@ export function BookingExperience() {
                 <h2>{confirmation ? "Booking confirmed" : "Book your appointment"}</h2>
               </div>
               <button className="icon-button" onClick={() => setModalOpen(false)} aria-label="Close booking modal">
-                x
+                <X size={18} />
               </button>
             </div>
 

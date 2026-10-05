@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model Service {
+  id String @id @default(cuid())
+  name String @unique
+  description String
+  durationMinutes Int
+  serviceArea String
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  appointments Appointment[]
+  @@map("services")
+}
+
+model Appointment {
+  id String @id @default(cuid())
+  customerName String
+  phone String
+  email String?
+  notes String?
+  date String
+  startTime String
+  endTime String
+  status String @default("CONFIRMED")
+  serviceArea String
+  manageToken String @unique
+  serviceId String
+  service Service @relation(fields: [serviceId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  notifications Notification[]
+  @@index([date, serviceArea, status])
+  @@map("appointments")
+}
+
+model AvailabilityRule {
+  id Int @id @default(autoincrement())
+  dayOfWeek Int @unique
+  openTime String
+  closeTime String
+  isClosed Boolean @default(false)
+  @@map("availability_rules")
+}
+
+model BlockedTime {
+  id String @id @default(cuid())
+  date String
+  startTime String?
+  endTime String?
+  reason String
+  createdAt DateTime @default(now())
+  @@index([date])
+  @@map("blocked_times")
+}
+
+model Notification {
+  id String @id @default(cuid())
+  appointmentId String?
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  channel String
+  purpose String
+  status String @default("MOCKED")
+  recipient String
+  subject String
+  body String
+  scheduledFor DateTime?
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([appointmentId])
+  @@map("notifications")
+}
+
+model AdminUser {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  createdAt DateTime @default(now())
+  sessions AdminSession[]
+  @@map("admin_users")
+}
+
+model AdminSession {
+  id String @id @default(cuid())
+  token String @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  adminId String
+  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  @@map("admin_sessions")
+}

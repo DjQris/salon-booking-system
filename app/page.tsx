@@ -1,5 +1,5 @@
-import { BookingExperience } from "@/components/BookingExperience";
+import { LandingPage } from "@/components/LandingPage";
 
 export default function Home() {
-  return <BookingExperience />;
+  return <LandingPage />;
 }

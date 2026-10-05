@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { assertSlotAvailable, buildNotificationDrafts, createManageToken } from "@/lib/booking";
 import { createAppointment, getServiceById } from "@/lib/db";
 import { isValidEmail, isValidPhone, normalizeOptional } from "@/lib/validation";
+import { getServerSession } from "next-auth";
+import { customerAuthOptions } from "@/lib/customer-auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(customerAuthOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: "Sign in to book an appointment." }, { status: 401 });
     const body = await request.json();
     const customerName = String(body.customerName ?? "").trim();
     const phone = String(body.phone ?? "").trim();
-    const email = normalizeOptional(body.email);
+    const email = session.user.email;
     const notes = normalizeOptional(body.notes);
     const serviceId = String(body.serviceId ?? "");
     const date = String(body.date ?? "");
